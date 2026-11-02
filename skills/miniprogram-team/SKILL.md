@@ -68,6 +68,16 @@ DOMAIN：后端服务域名（如 api.example.com），必须支持 HTTPS
 
 ---
 
+# 🔴 派遣铁律：成员 agent 一律前台派（2026-11-03 血教训）
+
+- 每次 `Agent` / `Task` 派成员，**必须显式 `run_in_background: false`**，同步等结果回来再进下一步；Bash 同样禁用 `run_in_background`。
+  - 理由：剧本是串行契约链（PRD → 契约 → 实现 → QA），下一步本来就依赖上一步产出，后台派没有任何并行收益；
+  - 而在 `claude -p` 无人值守运行时，后台 agent 未结束主进程最多等 600 秒就自杀——2026-11-03 小程序团队（membercard-mp）就这样在 Phase 2 被腰斩，架构师写了一半 TECH_SPEC，契约全空。
+- 真正可并行的（同一 Phase 内互不依赖的成员），在**同一条消息里发多个前台 Agent 调用**，不要用后台。
+- 要无人值守整条跑完：用 `detach-run --name <标签> -- claude -p --dangerously-skip-permissions "<任务书>"` 提交（detach-run 已自动注入 `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0` 兜底）；任务书里要求每个 Phase 往 `plans/PROGRESS.md` 追加一行，作为唯一进度窗口。
+
+---
+
 # 完整执行流程
 
 ---
